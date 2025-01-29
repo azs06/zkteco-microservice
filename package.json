@@ -12,8 +12,11 @@
   "dependencies": {
     "express": "^4.21.2",
     "i": "^0.3.7",
+    "moment-timezone": "^0.5.47",
+    "node-cache": "^5.1.2",
     "node-zklib": "^1.3.0",
     "npm": "^11.0.0",
+    "raw-body": "^3.0.0",
     "zkteco-js": "^1.7.0"
   }
 }
