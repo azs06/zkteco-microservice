@@ -1,7 +1,7 @@
 const express = require("express");
 const getRawBody = require("raw-body");
 const app = express();
-const port = 3016;
+const port = 8081;
 const moment = require("moment-timezone");
 moment().tz("Asia/Dhaka").format();
 const NodeCache = require("node-cache");
@@ -48,15 +48,15 @@ app.get("/iclock/cdata", async (req, res) => {
   res.set("Date", new Date().toUTCString());
   const timestamp = +new Date();
   let configuration = `
-GET OPTION FROM: ${req.query.SN}
-ATTLOGStamp=9999
-Realtime=1
-Delay=60000
-TransInterval=2
-TransFlag=1000000000
-TimeZone=6
-Encrypt=0
-`;
+    GET OPTION FROM: ${req.query.SN}
+    ATTLOGStamp=9999
+    Realtime=1
+    Delay=60000
+    TransInterval=2
+    TransFlag=1000000000
+    TimeZone=6
+    Encrypt=0
+  `;
   res.send(configuration);
 });
 

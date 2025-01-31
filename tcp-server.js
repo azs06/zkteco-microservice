@@ -8,6 +8,7 @@ const server = net.createServer((socket) => {
   let buffer = '';
 
   socket.on('data', (data) => {
+    console.log('Data received:', data.toString());
     buffer += data.toString(); // Append incoming data to buffer
 
     // Split messages by line (ZKTeco often uses \r\n as a delimiter)
@@ -35,6 +36,7 @@ const server = net.createServer((socket) => {
 
 // Parse ZKTeco's key-value format (e.g., "PIN=5\tDateTime=...")
 function parseZKTecoData(rawData) {
+  console.log('Raw Data:', rawData);
   if (rawData.startsWith('GET /iclock/cdata')) {
     // Parse the initial handshake (query parameters)
     const url = new URL(`http://dummy${rawData.split(' ')[1]}`);
