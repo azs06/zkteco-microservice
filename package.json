@@ -15,6 +15,7 @@
     "moment-timezone": "^0.5.47",
     "node-cache": "^5.1.2",
     "npm": "^11.0.0",
-    "raw-body": "^3.0.0"
+    "raw-body": "^3.0.0",
+    "sqlite3": "^5.1.7"
   }
 }

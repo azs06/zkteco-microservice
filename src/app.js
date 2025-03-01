@@ -5,12 +5,17 @@ const NodeCache = require("node-cache");
 const configCache = new NodeCache({ stdTTL: 600 }); // Cache for 10 minutes
 const { TIMEZONE, PORT } = require("./constants");
 const { authenticate } = require("./middleware/auth");
+const {
+  insertAttendance,
+  getAttendanceByDevice,
+  getAttendanceById,
+} = require("./database/dbService");
 
 moment().tz(TIMEZONE).format();
 const offsetMinutes = moment.tz(TIMEZONE).utcOffset();
 const offsetHours = offsetMinutes / 60;
-//To get the sign and value.
-const signedOffset = moment.tz(TIMEZONE).format("Z");
+// To get the sign and value.
+// const signedOffset = moment.tz(TIMEZONE).format("Z");
 
 const { getConfig } = require("./helpers");
 
@@ -53,8 +58,8 @@ app.get("/iclock/cdata", async (req, res) => {
     res.set("Date", new Date().toUTCString());
     let SN = req.query.SN;
     let cachedConfig = configCache.get(SN);
-    if(cachedConfig){
-        return res.send(cachedConfig);
+    if (cachedConfig) {
+      return res.send(cachedConfig);
     }
     let configuration = getConfig(req, offsetHours);
     configCache.set(SN, configuration);
@@ -81,30 +86,46 @@ app.post("/iclock/cdata", async (req, res) => {
   res.set("Date", new Date().toUTCString());
   let attendances = req.text;
   let attendanceLines = attendances.split("\n");
-  console.log({ req: req.query, text: req.text });
 
-  attendanceLines.map((line) => {
+  let insertPromises = attendanceLines.map((line) => {
     if (line.length) {
       let attendance = line.split("\t");
       let userId = attendance[0];
       let activityTime = attendance[1];
       let stateId = attendance[2];
-
-      console.log(req.query.SN, attendances, {
+      const attendanceRecord = {
         pin: userId,
         activityTime: activityTime,
-        lineRaw: line,
         stateId: stateId,
-      });
+        deviceSN: req.query.SN,
+      };
+      console.log("Attendance record:", attendanceRecord);
+      return insertAttendance(attendanceRecord);
     }
   });
-  res.send("OK:" + (attendanceLines.length - 1));
+  try {
+    await Promise.all(insertPromises);
+    res.send("OK:" + (attendanceLines.length - 1));
+  } catch (error) {
+    console.error("Error inserting attendance record:", error.message);
+    res.send("FAIL");
+  }
 });
 
 app.post("/iclock/devicecmd", async (req, res) => {
   let shouldBeOkay = moment().minute() % 10 == 0;
   if (shouldBeOkay) {
     res.send("OK");
+  }
+});
+
+// Retrieve all attendance records
+app.get("/attendance", async (req, res) => {
+  try {
+    let records = await getAllAttendance();
+    res.json(records);
+  } catch (error) {
+    res.status(500).json({ message: "Error retrieving data" });
   }
 });
 
