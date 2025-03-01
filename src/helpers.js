@@ -1,4 +1,4 @@
-const getConfig = (req) => {
+const getConfig = (req, offsetHours) => {
     return `
   GET OPTION FROM: ${req.query.SN}
   ATTLOGStamp=9999
@@ -6,7 +6,7 @@ const getConfig = (req) => {
   Delay=60000
   TransInterval=2
   TransFlag=1000000000
-  TimeZone=6
+  TimeZone=${offsetHours}
   Encrypt=0
   `;
   };

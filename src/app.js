@@ -5,10 +5,17 @@ const { TIMEZONE, PORT } = require("./constants");
 const { authenticate } = require("./middleware/auth");
 
 moment().tz(TIMEZONE).format();
+const offsetMinutes = moment.tz(TIMEZONE).utcOffset();
+const offsetHours = offsetMinutes / 60;
+//To get the sign and value.
+const signedOffset = moment.tz(TIMEZONE).format('Z');
+
+
 const { getConfig } = require("./helpers");
 
 const app = express();
 
+// authenticate against supported devices
 //app.use(authenticate);
 
 app.use(function (req, _, next) {
@@ -39,7 +46,7 @@ app.use(function (error, req, res, next) {
 app.get("/iclock/cdata", async (req, res) => {
   res.set("Content-Type", "text/plain");
   res.set("Date", new Date().toUTCString());
-  let configuration = getConfig(req);
+  let configuration = getConfig(req, offsetHours);
   res.send(configuration);
 });
 
