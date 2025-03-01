@@ -5,5 +5,5 @@ const API_KEY = process.env.API_KEY
 
 module.exports = {
     IP,
-    PORT
+    PORT,
 }
