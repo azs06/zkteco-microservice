@@ -1,6 +1,8 @@
 const express = require("express");
 const getRawBody = require("raw-body");
 const moment = require("moment-timezone");
+const NodeCache = require("node-cache");
+const configCache = new NodeCache({ stdTTL: 600 }); // Cache for 10 minutes
 const { TIMEZONE, PORT } = require("./constants");
 const { authenticate } = require("./middleware/auth");
 
@@ -8,8 +10,7 @@ moment().tz(TIMEZONE).format();
 const offsetMinutes = moment.tz(TIMEZONE).utcOffset();
 const offsetHours = offsetMinutes / 60;
 //To get the sign and value.
-const signedOffset = moment.tz(TIMEZONE).format('Z');
-
+const signedOffset = moment.tz(TIMEZONE).format("Z");
 
 const { getConfig } = require("./helpers");
 
@@ -44,10 +45,23 @@ app.use(function (error, req, res, next) {
 });
 
 app.get("/iclock/cdata", async (req, res) => {
-  res.set("Content-Type", "text/plain");
-  res.set("Date", new Date().toUTCString());
-  let configuration = getConfig(req, offsetHours);
-  res.send(configuration);
+  if (!req.query.SN) {
+    return res.status(400).json({ message: "Missing required parameter: SN" });
+  }
+  try {
+    res.set("Content-Type", "text/plain");
+    res.set("Date", new Date().toUTCString());
+    let SN = req.query.SN;
+    let cachedConfig = configCache.get(SN);
+    if(cachedConfig){
+        return res.send(cachedConfig);
+    }
+    let configuration = getConfig(req, offsetHours);
+    configCache.set(SN, configuration);
+    res.send(configuration);
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 });
 
 app.get("/iclock/getrequest", async (req, res) => {
