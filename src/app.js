@@ -1,12 +1,17 @@
 const express = require("express");
 const getRawBody = require("raw-body");
-const app = express();
-const port = 8081;
 const moment = require("moment-timezone");
-moment().tz("Asia/Dhaka").format();
+const { TIMEZONE, PORT } = require("./constants");
+const { authenticate } = require("./middleware/auth");
+
+moment().tz(TIMEZONE).format();
 const { getConfig } = require("./helpers");
 
-app.use(function (req, res, next) {
+const app = express();
+
+//app.use(authenticate);
+
+app.use(function (req, _, next) {
   getRawBody(
     req,
     {
@@ -22,20 +27,9 @@ app.use(function (req, res, next) {
   );
 });
 
-app.get("/", async (req, res) => {
+app.get("/", async (_, res) => {
   return res.status(200).json({ message: "MS of ADMS API" });
 });
-
-const authenticate = function (req, res, next) {
-  const allowedAgent = process.env.ALLOWED_AGENT;
-  if (req.header("User-Agent").includes(allowedAgent)) {
-    next();
-  } else {
-    return res.status(200).json({ message: "Authentication failed." });
-  }
-};
-
-// app.use(authenticate);
 
 app.use(function (error, req, res, next) {
   //Catch json error
@@ -93,6 +87,6 @@ app.post("/iclock/devicecmd", async (req, res) => {
   }
 });
 
-app.listen(port, () =>
-  console.log(`PMS-MS-SMS service listening on port ${port}!`)
+app.listen(PORT, () =>
+  console.log(`Zktecko service listening on port ${PORT}!`)
 );
