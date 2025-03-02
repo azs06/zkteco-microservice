@@ -6,7 +6,7 @@
     "start": "node ./src/app.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Md. Atiquzzaman Soikat",
   "license": "ISC",
   "description": "",
   "dependencies": {
