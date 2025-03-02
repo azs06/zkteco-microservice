@@ -11,7 +11,7 @@ const {
   getAttendanceById,
 } = require("./database/dbService");
 
-moment().tz(TIMEZONE);
+moment().tz(TIMEZONE).format();
 const offsetMinutes = moment.tz(TIMEZONE).utcOffset();
 const offsetHours = offsetMinutes / 60;
 // To get the sign and value.
