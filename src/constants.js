@@ -1,10 +1,12 @@
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config();
 
-const IP = process.env.IP
 const PORT = process.env.PORT
-const API_KEY = process.env.API_KEY
+const TIMEZONE = process.env.TIMEZONE
+
+console.log(`PORT: ${PORT}`)
+console.log(`TIMEZONE: ${TIMEZONE}`)
 
 module.exports = {
-    IP,
     PORT,
+    TIMEZONE
 }
