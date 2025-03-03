@@ -7,7 +7,10 @@ const { postAttendance } = require("../services/apiService");
 const { getConfig } = require("../helpers");
 const { TIMEZONE } = require("../constants");
 
+const { authenticate } = require("../middleware/auth");
+
 const router = express.Router();
+router.use(authenticate);
 const configCache = new NodeCache({ stdTTL: 600 });
 const offsetMinutes = moment.tz(TIMEZONE).utcOffset();
 const offsetHours = offsetMinutes / 60;
@@ -41,7 +44,11 @@ router.get("/iclock/cdata", async (req, res) => {
 router.get("/iclock/getrequest", async (_, res) => {
   res.set("Content-Type", "text/plain").set("Date", new Date().toUTCString());
   let startTime = moment().subtract(5, "minutes").format("YYYY-MM-DD HH:mm:ss");
-  res.send(`C:${Math.floor(Math.random() * 1000)}:DATA QUERY ATTLOG StartTime=${startTime}`);
+  res.send(
+    `C:${Math.floor(
+      Math.random() * 1000
+    )}:DATA QUERY ATTLOG StartTime=${startTime}`
+  );
 });
 
 router.post("/iclock/cdata", async (req, res) => {
@@ -58,7 +65,9 @@ router.post("/iclock/cdata", async (req, res) => {
       return null;
     })
     .filter(Boolean)
-    .map((record) => Promise.all([insertAttendance(record), postAttendance(record)]));
+    .map((record) =>
+      Promise.all([insertAttendance(record), postAttendance(record)])
+    );
 
   try {
     await Promise.all(insertPromises);
