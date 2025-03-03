@@ -5,7 +5,7 @@ const NodeCache = require("node-cache");
 const { insertAttendance } = require("../database/dbService");
 const { postAttendance } = require("../services/apiService");
 const { getConfig } = require("../helpers");
-const { TIMEZONE } = require("../constants");
+const { TIMEZONE, API_INTEGRATION_ENABLED } = require("../constants");
 
 const { authenticate } = require("../middleware/auth");
 
@@ -65,9 +65,14 @@ router.post("/iclock/cdata", async (req, res) => {
       return null;
     })
     .filter(Boolean)
-    .map((record) =>
-      Promise.all([insertAttendance(record), postAttendance(record)])
-    );
+    .map((record) => {
+      const promiseArray = [];
+      promiseArray.push(insertAttendance(record));
+      if (API_INTEGRATION_ENABLED) {
+        promiseArray.push(postAttendance(record));
+      }
+      return Promise.all(promiseArray);
+    });
 
   try {
     await Promise.all(insertPromises);
