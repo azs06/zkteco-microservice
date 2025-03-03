@@ -28,11 +28,10 @@ const postAttendance = async (attendance) => {
 
     // Construct FormData
     const form = new FormData();
-    form.append("user_id", 2); // Hardcoded for now
+    form.append("user_id", pin); // Hardcoded for now
     form.append("state", state);
     //form.append("timestamp", activityTime);
     form.append("device", deviceSN);
-    console.log({ API_URL });
     // API request
     const response = await fetch(API_URL, {
       method: "POST",
