@@ -1,7 +1,7 @@
 const db = require("./db");
 
 // Insert attendance record
-const insertAttendance = (pin, activityTime, stateId, deviceSN) => {
+const insertAttendance = ({pin, activityTime, stateId, deviceSN}) => {
   return new Promise((resolve, reject) => {
     db.run(
       `INSERT INTO attendance (pin, activityTime, stateId, deviceSN) VALUES (?, ?, ?, ?)`,

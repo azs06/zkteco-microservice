@@ -32,6 +32,8 @@ const getStateById = (stateId) => {
     case 5:
       state = "overtime-out";
       break;
+    default:
+      state = "unknown";  
   }
 
   return state;
@@ -42,8 +44,14 @@ function logger(req, res, next) {
   next();
 }
 
+function log(data){
+  if(process.env.NODE_ENV === 'production') return;
+  console.log(data);
+}
+
 module.exports = {
   getConfig,
   getStateById,
   logger,
+  log
 };

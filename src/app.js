@@ -17,7 +17,7 @@ const offsetHours = offsetMinutes / 60;
 // To get the sign and value.
 // const signedOffset = moment.tz(TIMEZONE).format("Z");
 
-const { getConfig } = require("./helpers");
+const { getConfig, getStateById } = require("./helpers");
 
 const app = express();
 
@@ -87,22 +87,37 @@ app.post("/iclock/cdata", async (req, res) => {
   let attendances = req.text;
   let attendanceLines = attendances.split("\n");
 
-  let insertPromises = attendanceLines.map((line) => {
-    if (line.length) {
-      let attendance = line.split("\t");
-      let userId = attendance[0];
-      let activityTime = attendance[1];
-      let stateId = attendance[2];
-      const attendanceRecord = {
-        pin: userId,
-        activityTime: activityTime,
-        stateId: stateId,
-        deviceSN: req.query.SN,
-      };
-      console.log("Attendance record:", attendanceRecord);
+  let insertPromises = attendanceLines
+    .map((line) => {
+      if (line.length) {
+        let attendance = line.split("\t");
+        let userId = attendance[0];
+        let activityTime = attendance[1];
+        let stateId = attendance[2];
+        const attendanceRecord = {
+          pin: userId,
+          activityTime: activityTime,
+          stateId: stateId,
+          deviceSN: req.query.SN,
+        };
+
+        return attendanceRecord;
+      }
+      return null;
+    })
+    .filter((attendanceRecord) => attendanceRecord !== null) // remove empty lines
+    .filter((attendanceRecord) => {
+      const { pin, stateId } = attendanceRecord;
+      // Ignore LOG records and unknown stateId
+      if (pin.includes("LOG") || stateId == 255) {
+        return false;
+      }
+      return true;
+    })
+    .map((attendanceRecord) => {
+      console.log("Inserting attendance record:", attendanceRecord);
       return insertAttendance(attendanceRecord);
-    }
-  });
+    });
   try {
     await Promise.all(insertPromises);
     res.send("OK:" + (attendanceLines.length - 1));
