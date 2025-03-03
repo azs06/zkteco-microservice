@@ -1,11 +1,11 @@
 const express = require("express");
-const { getAttendanceByDevice, getAttendanceById } = require("../database/dbService");
+const { getAttendanceByDevice, getAttendanceById, getAllAttendance } = require("../database/dbService");
 
 const router = express.Router();
 
 router.get("/attendance", async (_, res) => {
   try {
-    let records = await getAttendanceByDevice();
+    let records = await getAllAttendance();
     res.json(records);
   } catch (error) {
     res.status(500).json({ message: "Error retrieving data" });
