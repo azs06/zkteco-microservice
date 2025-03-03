@@ -40,9 +40,6 @@ const postAttendance = async (attendance) => {
       },
       body: form,
     });
-    console.log(response);
-    const responseJson = await response.json();
-    console.log(responseJson);
     // Parse response
     if (!response.ok) {
       const errorBody = await response.text();
