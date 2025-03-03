@@ -5,6 +5,7 @@ const NodeCache = require("node-cache");
 const configCache = new NodeCache({ stdTTL: 600 }); // Cache for 10 minutes
 const { TIMEZONE, PORT } = require("./constants");
 const { authenticate } = require("./middleware/auth");
+const { postAttendance } = require("./services/apiService");
 const {
   insertAttendance,
   getAttendanceByDevice,
@@ -17,7 +18,7 @@ const offsetHours = offsetMinutes / 60;
 // To get the sign and value.
 // const signedOffset = moment.tz(TIMEZONE).format("Z");
 
-const { getConfig, getStateById } = require("./helpers");
+const { getConfig } = require("./helpers");
 
 const app = express();
 
@@ -116,7 +117,7 @@ app.post("/iclock/cdata", async (req, res) => {
     })
     .map((attendanceRecord) => {
       console.log("Inserting attendance record:", attendanceRecord);
-      return insertAttendance(attendanceRecord);
+      return Promise.all([insertAttendance(attendanceRecord), postAttendance(attendanceRecord)]);
     });
   try {
     await Promise.all(insertPromises);
