@@ -1,4 +1,5 @@
 const fetch = require("node-fetch");
+const FormData = require("form-data");
 const { API_URL, API_KEY } = require("../constants");
 const { getStateById } = require("../helpers");
 
@@ -31,7 +32,7 @@ const postAttendance = async (attendance) => {
     form.append("state", state);
     //form.append("timestamp", activityTime);
     form.append("device", deviceSN);
-
+    console.log({ API_URL });
     // API request
     const response = await fetch(API_URL, {
       method: "POST",
@@ -40,7 +41,9 @@ const postAttendance = async (attendance) => {
       },
       body: form,
     });
-
+    console.log(response);
+    const responseJson = await response.json();
+    console.log(responseJson);
     // Parse response
     if (!response.ok) {
       const errorBody = await response.text();
@@ -53,7 +56,6 @@ const postAttendance = async (attendance) => {
       activityTime,
       deviceSN,
     });
-
   } catch (error) {
     console.error("Error posting attendance record:", error.message);
   }
