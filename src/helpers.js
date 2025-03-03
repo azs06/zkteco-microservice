@@ -15,10 +15,10 @@ const getStateById = (stateId) => {
   let state = "clock-in";
   switch (parseInt(stateId, 10)) {
     case 0:
-      state = "check-in";
+      state = "clock-in";
       break;
     case 1:
-      state = "check-out";
+      state = "clock-out";
       break;
     case 2:
       state = "break-in";

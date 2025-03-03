@@ -3,9 +3,11 @@ const FormData = require("form-data");
 const { API_URL, API_KEY } = require("../constants");
 const { getStateById } = require("../helpers");
 
+/* Requied for api */
+
 const stateMap = {
-  "check-in": "Clock In",
-  "check-out": "Clock Out",
+  "clock-in": "Clock In",
+  "clock-out": "Clock Out",
   "break-in": "Break In",
   "break-out": "Break Out",
   "overtime-in": "Overtime In",
