@@ -22,4 +22,13 @@ router.get("/attendance/:id", async (req, res) => {
   }
 });
 
+router.get("/attendance/device/:deviceSN", async (req, res) => {
+    try {
+        let records = await getAttendanceByDevice(req.params.deviceSN);
+        res.json(records);
+    } catch (error) {
+        res.status(500).json({ message: "Error retrieving data" });
+    }
+});
+
 module.exports = router;
