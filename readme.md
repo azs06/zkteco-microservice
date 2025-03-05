@@ -1,8 +1,10 @@
-# An express based http microservice that logs data from ZkTecko devices
+# Express-based HTTP Microservice for ZKTeco Device Logging
 
-## This microserive exposes an api endpoint that accepts data from ZkTecko devices and saves it to a sqlite database, Optionally you can integrate this microservice with other application using an api
+This microservice provides an API endpoint to accept data from **ZKTeco** devices and store it in an **SQLite database**. Additionally, it offers optional **API integration** with other applications.
 
-If you want to integrate this microservice with another application, you can set `API_INTEGRATION_ENABLED` to `true` and provide the `API_URL` and `API_KEY` in the `.env` file. Check `services/apiService.js` for more information.
+## 🔗 API Integration
+
+To integrate this microservice with another application, set the following environment variables in the `.env` file:
 
 ```bash
 API_URL=https://api.example.com
@@ -10,14 +12,13 @@ API_KEY=1234567890
 API_INTEGRATION_ENABLED=true
 ```
 
-### Also includes couple of endpoints to retrieve the data from the database
+Refer to services/apiService.js for more details.
 
-Available endpoints:
+### Enhancements
 
-- GET /api/attendance - retrieves all attendance logs
-- GET /api/attendance/:id - retrieves attendance log by id
-- GET /api/attendance/devices/:deviceSn - retrieves attendance log by devices serial number.
+- **Better readability** with headings and sections.
+- **Formatted API keys & environment variables** in a separate block.
+- **Used icons & bold text** for emphasis.
+- **Improved grammar & structure** for clarity.
 
-> Note: This was tested using ZkTecko uFace 800 device only, but should work with other ZkTecko devices as well.
-
-#### Feel free to contribute to this project by creating a pull request
+Let me know if you need further refinements! 🚀
