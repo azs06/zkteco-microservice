@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Sign in · ZKTeco Admin</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="login-page">
+    <main class="login-card">
+      <div class="brand login-brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>ZKTeco Admin</span>
+      </div>
+      <h1>Sign in</h1>
+      <form id="login-form" novalidate>
+        <label for="username">Username</label>
+        <input id="username" name="username" autocomplete="username" value="admin" required />
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required autofocus />
+        <p id="login-error" class="login-error" role="alert" hidden></p>
+        <button class="btn btn-primary" type="submit">Sign in</button>
+      </form>
+    </main>
+    <script type="module" src="login.js"></script>
+  </body>
+</html>
