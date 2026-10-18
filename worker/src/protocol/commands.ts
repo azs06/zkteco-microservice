@@ -41,7 +41,9 @@ export function addUser(
   const level = requirePrivilege(u.privilege);
   if (isAcc(deviceType)) {
     return [
-      `DATA UPDATE user CardNo=${value(u.cardNo)}\tPin=${id}\tPassword=${value(u.password)}\tGroup=0\tStartTime=0\tEndTime=0\tName=${value(u.name)}\tPrivilege=${level}`,
+      // Group 1 is the default access group. Group 0 makes the device treat the user as part of a
+      // multi-user combination, so every verification fails with event 48 ("invalid combination").
+      `DATA UPDATE user CardNo=${value(u.cardNo)}\tPin=${id}\tPassword=${value(u.password)}\tGroup=1\tStartTime=0\tEndTime=0\tName=${value(u.name)}\tPrivilege=${level}`,
       // Without an authorization the device recognises the user but denies access.
       `DATA UPDATE userauthorize Pin=${id}\tAuthorizeTimezoneId=1\tAuthorizeDoorId=1`,
     ];
