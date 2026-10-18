@@ -1,7 +1,10 @@
 name = "zkteco-adms"
 main = "src/index.ts"
 compatibility_date = "2025-09-01"
-compatibility_flags = ["nodejs_compat"]
+# global_fetch_strictly_public: send fetch() to POS hosts through the public internet. Without it,
+# requests to hosts in our own zone (dokanepos.xyz) go straight to the origin under the zone's SSL
+# mode, and with Flexible SSL that loops on the origin's HTTP -> HTTPS redirect.
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 workers_dev = true
 
 # Devices are configured with this hostname (COMM -> Cloud Server Setting).
