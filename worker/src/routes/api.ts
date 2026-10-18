@@ -182,14 +182,14 @@ apiRoutes.patch("/devices/:sn", async (c) => {
   if (body.name !== undefined) patch.name = body.name || null;
   if (body.branchId !== undefined) patch.branchId = body.branchId;
   if (Object.keys(patch).length === 0) return c.json(presentDevice(device));
-  const updated = await updateDevice(c.env.DB, device.sn, patch);
+  const updated = await updateDevice(c.env.DB, device.sn, patch, c.get("tenant").id);
   if (!updated) throw new HttpError(404, "Device not found");
   return c.json(presentDevice(updated));
 });
 
 apiRoutes.delete("/devices/:sn", async (c) => {
   const device = await tenantDevice(c);
-  await releaseDevice(c.env.DB, device.sn);
+  if (!(await releaseDevice(c.env.DB, device.sn, c.get("tenant").id))) throw new HttpError(404, "Device not found");
   return c.body(null, 204);
 });
 

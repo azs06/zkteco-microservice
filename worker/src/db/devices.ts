@@ -139,7 +139,10 @@ export async function claimDevice(
 export async function updateDevice(
   db: D1Database,
   sn: string,
-  patch: Partial<{ name: string | null; branchId: number | null; status: DeviceStatus; tenantId: string | null }>
+  patch: Partial<{ name: string | null; branchId: number | null; status: DeviceStatus; tenantId: string | null }>,
+  // Set by the tenant API: the update only applies while the device still belongs to this tenant,
+  // so a reassignment between the ownership check and the write can't be overridden.
+  ownerTenantId?: string
 ): Promise<Device | null> {
   const sets: string[] = [];
   const values: unknown[] = [];
@@ -151,8 +154,13 @@ export async function updateDevice(
   if (patch.tenantId !== undefined) (sets.push("tenant_id = ?"), values.push(patch.tenantId));
   if (!sets.length) return getDevice(db, sn);
   const ts = now();
+  const owner = ownerTenantId === undefined ? "" : " AND tenant_id = ?";
+  const ownerValues = ownerTenantId === undefined ? [] : [ownerTenantId];
+  // The follow-up statements recompute from the device row, so they are no-ops if this one matched nothing.
   const statements = [
-    db.prepare(`UPDATE devices SET ${sets.join(", ")}, updated_at = ? WHERE sn = ? RETURNING *`).bind(...values, ts, sn),
+    db
+      .prepare(`UPDATE devices SET ${sets.join(", ")}, updated_at = ? WHERE sn = ?${owner} RETURNING *`)
+      .bind(...values, ts, sn, ...ownerValues),
   ];
   if (patch.tenantId !== undefined || patch.branchId !== undefined) statements.push(syncPunches(db, sn, ts));
   if (patch.tenantId !== undefined) statements.push(cancelForeignCommands(db, sn, ts));
@@ -161,12 +169,17 @@ export async function updateDevice(
   return row ? toDevice(row) : null;
 }
 
-export async function releaseDevice(db: D1Database, sn: string): Promise<void> {
+// With ownerTenantId, only releases a device that still belongs to that tenant. Returns whether it did.
+export async function releaseDevice(db: D1Database, sn: string, ownerTenantId?: string): Promise<boolean> {
   const ts = now();
-  await db.batch([
-    db.prepare("UPDATE devices SET tenant_id = NULL, branch_id = NULL, status = 'pending', updated_at = ? WHERE sn = ?").bind(ts, sn),
+  const owner = ownerTenantId === undefined ? "" : " AND tenant_id = ?";
+  const [released] = await db.batch([
+    db
+      .prepare(`UPDATE devices SET tenant_id = NULL, branch_id = NULL, status = 'pending', updated_at = ? WHERE sn = ?${owner}`)
+      .bind(ts, sn, ...(ownerTenantId === undefined ? [] : [ownerTenantId])),
     cancelForeignCommands(db, sn, ts),
   ]);
+  return (released?.meta.changes ?? 0) > 0;
 }
 
 // Users and commands go with the device; punches are kept (they are the attendance record).

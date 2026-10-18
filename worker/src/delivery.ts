@@ -86,9 +86,16 @@ async function postJson(url: string, posKey: string, body: string): Promise<Post
       },
       body,
       signal: controller.signal,
+      // A redirect is a misconfigured POS URL. Following it could land the POST on, say, a login
+      // page that answers 200, and the punches would be marked delivered without being stored.
+      redirect: "manual",
     });
     const text = await res.text().catch(() => "");
     if (res.ok) return { status: res.status, error: null };
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get("Location");
+      return { status: res.status, error: `HTTP ${res.status}: redirected${location ? " to " + location : ""}; check the POS API URL` };
+    }
     return { status: res.status, error: `HTTP ${res.status}${text ? ": " + text.slice(0, 200) : ""}` };
   } catch (e) {
     const timedOut = controller.signal.aborted;

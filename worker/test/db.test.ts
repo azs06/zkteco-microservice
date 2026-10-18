@@ -4,7 +4,7 @@ import { getPlatformProxy } from "wrangler";
 // @ts-expect-error vite ?raw import (no type declaration)
 import migration from "../migrations/0001_init.sql?raw";
 import { createTenant, deleteTenant, getTenantByApiKeyHash, listTenants, updateTenant } from "../src/db/tenants";
-import { claimDevice, getDevice, isAdmitted, listDevices, recordSeen, updateDevice } from "../src/db/devices";
+import { claimDevice, getDevice, isAdmitted, listDevices, recordSeen, releaseDevice, updateDevice } from "../src/db/devices";
 import { listDeviceUsers, pruneDeviceUsers, upsertDeviceUsers } from "../src/db/users";
 import { completeCommand, getCommand, queueCommands, recordQueryPacket, takeNextCommand } from "../src/db/commands";
 import {
@@ -159,6 +159,30 @@ describe("db", () => {
     expect(await insertPunches(db, many)).toEqual({ inserted: 2500 });
     expect(await insertPunches(db, many.slice(0, 10))).toEqual({ inserted: 0 });
     expect((await queryPunches(db, { sn: "BIG", pin: "42" })).punches[0]).toMatchObject({ branchId: null, deliveryStatus: "held", verifyMode: "face" });
+  });
+
+  it("only lets the owning tenant change or release a device", async () => {
+    const x = await createTenant(db, { name: "X", posApiUrl: null, posKeyEnc: null, apiKeyHash: "h-own-x", apiKeyPrefix: "adms_ownx", timezone: "Asia/Dhaka" });
+    const y = await createTenant(db, { name: "Y", posApiUrl: null, posKeyEnc: null, apiKeyHash: "h-own-y", apiKeyPrefix: "adms_owny", timezone: "Asia/Dhaka" });
+    await claimDevice(db, "OWN1", x.id, { name: "Gate", branchId: 1 });
+    // X passed its ownership check, then the admin moved the device to Y before X's write.
+    await updateDevice(db, "OWN1", { tenantId: y.id, branchId: 5 });
+    expect(await updateDevice(db, "OWN1", { name: "Hijacked", branchId: 9 }, x.id)).toBeNull();
+    expect(await releaseDevice(db, "OWN1", x.id)).toBe(false);
+    expect(await getDevice(db, "OWN1")).toMatchObject({ tenantId: y.id, branchId: 5, name: "Gate", status: "approved" });
+    expect(await updateDevice(db, "OWN1", { name: "Front" }, y.id)).toMatchObject({ name: "Front" });
+    expect(await releaseDevice(db, "OWN1", y.id)).toBe(true);
+    expect(await getDevice(db, "OWN1")).toMatchObject({ tenantId: null, status: "pending" });
+  });
+
+  it("releases a punch stored as held after the device was claimed", async () => {
+    const z = await createTenant(db, { name: "Z", posApiUrl: "https://z", posKeyEnc: "k", apiKeyHash: "h-race-z", apiKeyPrefix: "adms_racez", timezone: "Asia/Dhaka" });
+    await recordSeen(db, { sn: "RACE1" });
+    // The upload read the device while it had no tenant; the claim (and its sweep) ran before the insert.
+    await claimDevice(db, "RACE1", z.id, { branchId: 3 });
+    expect(await insertPunches(db, [punch("RACE1", null, "1", "2026-10-18 09:00:00")])).toEqual({ inserted: 1 });
+    const { punches } = await queryPunches(db, { sn: "RACE1" });
+    expect(punches[0]).toMatchObject({ tenantId: z.id, branchId: 3, deliveryStatus: "pending" });
   });
 
   it("caps pending devices", async () => {

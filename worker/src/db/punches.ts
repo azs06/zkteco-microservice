@@ -50,8 +50,24 @@ export async function insertPunches(db: D1Database, punches: NewPunch[]): Promis
   const sql = `INSERT INTO punches (${PUNCH_COLUMNS.join(", ")}) SELECT ${select} FROM json_each(?) WHERE true
                ON CONFLICT(sn, pin, punched_at) DO NOTHING`;
   const statements = jsonChunks(punches.map((p) => toJsonRow(p, ts))).map((json) => db.prepare(sql).bind(json));
-  const results = await db.batch(statements);
-  return { inserted: results.reduce((sum, r) => sum + (r.meta.changes ?? 0), 0) };
+  // The caller read the device (no tenant yet) before this insert. If the device was assigned in
+  // between, its held-punch release already ran and missed these rows, so release them here, in
+  // the same transaction.
+  const heldSerials = [...new Set(punches.filter((p) => p.tenantId === null).map((p) => p.sn))];
+  const release = heldSerials.map((sn) =>
+    db
+      .prepare(
+        `UPDATE punches SET
+           tenant_id = (SELECT tenant_id FROM devices WHERE sn = ?1),
+           branch_id = (SELECT branch_id FROM devices WHERE sn = ?1),
+           delivery_status = 'pending', next_attempt_at = ?2
+         WHERE sn = ?1 AND delivery_status = 'held'
+           AND (SELECT tenant_id FROM devices WHERE sn = ?1) IS NOT NULL`
+      )
+      .bind(sn, ts)
+  );
+  const results = await db.batch([...statements, ...release]);
+  return { inserted: results.slice(0, statements.length).reduce((sum, r) => sum + (r.meta.changes ?? 0), 0) };
 }
 
 // Opaque keyset cursor: base64url of [punched_at, id] of the last row returned.

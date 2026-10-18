@@ -64,13 +64,21 @@ const withSecurityHeaders = (c: Context<AppEnv>) => {
 // native password prompt. Disabled entirely when ADMIN_PASSWORD is unset.
 const PUBLIC_PATHS = ["/admin/login", "/admin/login.js", "/admin/theme.js", "/admin/styles.css", "/api/admin/login", "/api/admin/logout"];
 
-const hasValidBasic = (c: Context<AppEnv>, password: string) => {
+const clientIp = (c: Context<AppEnv>) => c.req.header("CF-Connecting-IP") || "local";
+
+// "throttled" when this client has too many failed sign-ins: Basic auth shares the login
+// page's failure count, so it can't be used to guess the password without the limit.
+const checkBasic = (c: Context<AppEnv>, password: string): "none" | "ok" | "bad" | "throttled" => {
   const credentials = parseBasic(c.req.header("Authorization"));
-  if (!credentials) return false;
+  if (!credentials) return "none";
+  const ip = clientIp(c);
+  if (isLoginThrottled(ip)) return "throttled";
   // Compute both so a wrong user name takes as long as a wrong password.
   const userOk = timingSafeEqual(credentials.user, ADMIN_USER);
   const passwordOk = timingSafeEqual(credentials.password, password);
-  return userOk && passwordOk;
+  if (userOk && passwordOk) return "ok";
+  recordLoginFailure(ip);
+  return "bad";
 };
 
 export const adminAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
@@ -79,22 +87,21 @@ export const adminAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
     withSecurityHeaders(c);
     return c.json({ error: "Admin UI disabled: set ADMIN_PASSWORD" }, 503);
   }
-  const authed =
-    PUBLIC_PATHS.includes(c.req.path) ||
-    (await verifySession(password, getCookie(c, SESSION_COOKIE))) ||
-    hasValidBasic(c, password);
-  if (authed) {
+  const basic =
+    PUBLIC_PATHS.includes(c.req.path) || (await verifySession(password, getCookie(c, SESSION_COOKIE)))
+      ? "ok"
+      : checkBasic(c, password);
+  if (basic === "ok") {
     await next();
     // After next() so the headers also land on asset responses (Hono clones them).
     withSecurityHeaders(c);
     return;
   }
   withSecurityHeaders(c);
+  if (basic === "throttled") return c.json({ error: "Too many failed sign-in attempts. Try again in 15 minutes." }, 429);
   if (!c.req.path.startsWith("/api/")) return c.redirect("/admin/login");
   return c.json({ error: "Authentication required" }, 401);
 };
-
-const clientIp = (c: Context<AppEnv>) => c.req.header("CF-Connecting-IP") || "local";
 
 const sessionCookieOptions = (c: Context<AppEnv>) => ({
   path: "/",
