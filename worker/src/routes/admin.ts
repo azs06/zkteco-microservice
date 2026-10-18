@@ -62,7 +62,7 @@ const withSecurityHeaders = (c: Context<AppEnv>) => {
 // Admin auth: a signed session cookie set by the login page, or HTTP Basic for scripts and
 // curl. No WWW-Authenticate header is sent, so browsers show the login page instead of a
 // native password prompt. Disabled entirely when ADMIN_PASSWORD is unset.
-const PUBLIC_PATHS = ["/admin/login", "/admin/login.js", "/admin/styles.css", "/api/admin/login", "/api/admin/logout"];
+const PUBLIC_PATHS = ["/admin/login", "/admin/login.js", "/admin/theme.js", "/admin/styles.css", "/api/admin/login", "/api/admin/logout"];
 
 const hasValidBasic = (c: Context<AppEnv>, password: string) => {
   const credentials = parseBasic(c.req.header("Authorization"));

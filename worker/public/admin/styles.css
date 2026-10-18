@@ -23,29 +23,28 @@
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f1218;
-    --surface: #171b23;
-    --surface-2: #1e232d;
-    --border: #2a303c;
-    --text: #e6e9ef;
-    --muted: #98a2b3;
-    --accent: #5b8ff0;
-    --accent-hover: #74a1f3;
-    --accent-text: #0b1220;
-    --accent-soft: #1b2a45;
-    --ok: #3ccf7a;
-    --ok-soft: #133222;
-    --warn: #e0a84a;
-    --warn-soft: #3a2c12;
-    --danger: #f06368;
-    --danger-soft: #3d1a1c;
-    --off: #5d6677;
-    --focus: #74a1f3;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    color-scheme: dark;
-  }
+/* Light is the default; theme.js sets data-theme="dark" when the viewer picks dark. */
+:root[data-theme="dark"] {
+  --bg: #0f1218;
+  --surface: #171b23;
+  --surface-2: #1e232d;
+  --border: #2a303c;
+  --text: #e6e9ef;
+  --muted: #98a2b3;
+  --accent: #5b8ff0;
+  --accent-hover: #74a1f3;
+  --accent-text: #0b1220;
+  --accent-soft: #1b2a45;
+  --ok: #3ccf7a;
+  --ok-soft: #133222;
+  --warn: #e0a84a;
+  --warn-soft: #3a2c12;
+  --danger: #f06368;
+  --danger-soft: #3d1a1c;
+  --off: #5d6677;
+  --focus: #74a1f3;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -262,3 +261,15 @@ textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; bor
 .nav form { display: flex; margin-left: 8px; }
 .nav .logout { color: var(--muted); padding: 6px 10px; border-radius: 6px; font: inherit; font-weight: 500; background: none; border: 0; cursor: pointer; }
 .nav .logout:hover { color: var(--text); background: var(--surface-2); }
+
+/* Light/dark toggle */
+.theme-toggle {
+  display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px;
+  border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--muted);
+  cursor: pointer; font-size: 16px; line-height: 1; padding: 0;
+}
+.theme-toggle:hover { color: var(--text); background: var(--surface-2); }
+.theme-toggle:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.nav .theme-toggle { margin-left: 8px; align-self: center; }
+.login-card { position: relative; }
+.login-card .theme-toggle { position: absolute; top: 16px; right: 16px; }
