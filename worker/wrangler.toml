@@ -1,0 +1,47 @@
+name = "zkteco-adms"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+# global_fetch_strictly_public: send fetch() to POS hosts through the public internet. Without it,
+# requests to hosts in our own zone (dokanepos.xyz) go straight to the origin under the zone's SSL
+# mode, and with Flexible SSL that loops on the origin's HTTP -> HTTPS redirect.
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+workers_dev = true
+
+# Devices are configured with this hostname (COMM -> Cloud Server Setting).
+routes = [{ pattern = "adms.dokanepos.xyz", custom_domain = true }]
+
+# ─────────────────────────────────────────────────────────────────
+# D1 database. Before the first deploy:
+#   wrangler d1 create zkteco_adms
+# then paste the returned database_id below.
+# ─────────────────────────────────────────────────────────────────
+[[d1_databases]]
+binding = "DB"
+database_name = "zkteco_adms"
+database_id = "cdd97969-755b-4083-869d-1eaa74bdfaa1"
+migrations_dir = "migrations"
+
+# Admin UI (public/admin). run_worker_first keeps the files behind admin auth.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+
+# Webhook retries (punches and device users to each POS).
+[triggers]
+crons = ["* * * * *"]
+
+[observability]
+enabled = true
+
+[vars]
+# Timezone for devices not yet assigned to a tenant.
+DEFAULT_TIMEZONE = "Asia/Dhaka"
+# Seconds between device polls for queued commands (Security PUSH RequestDelay).
+REQUEST_DELAY = "15"
+# Comma-separated serial numbers always admitted, even without a tenant (testing).
+ALLOWED_SERIALS = ""
+
+# Secrets (wrangler secret put <NAME>; locally in .dev.vars):
+#   ADMIN_PASSWORD  - admin UI / admin API password (user "admin")
+#   ENCRYPTION_KEY  - base64 of 32 random bytes; encrypts stored POS API keys
